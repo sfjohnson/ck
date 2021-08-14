@@ -44,6 +44,7 @@ jobs:
           set -o allexport
           source build/ck.build.android-aarch64
           set +o allexport
+          unset CFLAGS
           ./configure --profile="android-aarch64"
           make
 
