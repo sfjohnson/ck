@@ -41,7 +41,9 @@ jobs:
 
       - name: Configure and make
         run: |
-          export $(cat build/ck.build.android-aarch64 | xargs -d '\n')
+          set -o allexport
+          source build/ck.build.android-aarch64
+          set +o allexport
           ./configure --profile="android-aarch64"
           make
 
