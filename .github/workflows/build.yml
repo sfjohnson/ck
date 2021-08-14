@@ -1,0 +1,79 @@
+name: Build Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-macos:
+    runs-on: macos-10.15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+
+      - name: Configure and make
+        run: |
+          ./configure
+          make
+
+      - name: Rename build output
+        run: mv src/libck.a ./libck-macos10.a
+
+      - name: Upload build output
+        uses: actions/upload-artifact@v2
+        with:
+          name: build-output-macos10
+          path: |
+            include
+            libck-macos10.a
+            LICENSE
+
+  build-android:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+
+      - name: Configure and make
+        run: |
+          export $(cat build/ck.build.android-aarch64 | xargs)
+          ./configure --profile="android-aarch64"
+          make
+
+      - name: Rename build output
+        run: mv src/libck.a ./libck-android30.a
+
+      - name: Upload build output
+        uses: actions/upload-artifact@v2
+        with:
+          name: build-output-android30
+          path: libck-android30.a
+
+  create-release:
+    runs-on: ubuntu-20.04
+    needs: [build-macos, build-android]
+    steps:
+      - name: Get build output macos10
+        uses: actions/download-artifact@v2
+        with:
+          name: build-output-macos10
+
+      - name: Get build output android30
+        uses: actions/download-artifact@v2
+        with:
+          name: build-output-android30
+
+      - name: Create release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            libck-macos10.a
+            libck-android30.a
+            LICENSE
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
