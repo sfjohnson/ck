@@ -74,6 +74,8 @@ jobs:
           ln -sf $ANDROID_NDK_ROOT $ANDROID_SDK_ROOT/ndk-bundle
           ./configure --profile="android-aarch64"
           make
+        env:
+          CC: /usr/local/lib/android/sdk/ndk-bundle/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android30-clang
 
       - name: Rename build output
         run: mv src/libck.a ./libck-android30.a
