@@ -71,6 +71,7 @@ jobs:
 
       - name: Configure and make
         run: |
+          ln -sf $ANDROID_NDK_ROOT $ANDROID_SDK_ROOT/ndk-bundle
           ./configure --profile="android-aarch64"
           make
         env:
