@@ -7,7 +7,7 @@ on:
 
 jobs:
   build-macos:
-    runs-on: macos-10.15
+    runs-on: macos-11
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -24,15 +24,15 @@ jobs:
           pushd include
           zip -r ../include.zip .
           popd
-          mv src/libck.a ./libck-macos10.a
+          mv src/libck.a ./libck-macos11.a
 
       - name: Upload build output
         uses: actions/upload-artifact@v2
         with:
-          name: build-output-macos10
+          name: build-output-macos11
           path: |
             include.zip
-            libck-macos10.a
+            libck-macos11.a
             LICENSE
 
   build-macos-arm64:
@@ -90,10 +90,10 @@ jobs:
     runs-on: ubuntu-20.04
     needs: [build-macos, build-android, build-macos-arm64]
     steps:
-      - name: Get build output macos10
+      - name: Get build output macos11
         uses: actions/download-artifact@v2
         with:
-          name: build-output-macos10
+          name: build-output-macos11
 
       - name: Get build output android30
         uses: actions/download-artifact@v2
@@ -110,7 +110,7 @@ jobs:
         with:
           files: |
             include.zip
-            libck-macos10.a
+            libck-macos11.a
             libck-android30.a
             libck-macos-arm64.a
             LICENSE
