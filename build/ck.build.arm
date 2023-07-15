@@ -1,1 +1,8 @@
-CFLAGS+=-D__arm__
+AR=${HOME}/arm-rpi-linux-gnueabihf/bin/arm-rpi-linux-gnueabihf-ar
+CC=${HOME}/arm-rpi-linux-gnueabihf/bin/arm-rpi-linux-gnueabihf-gcc
+LD=${HOME}/arm-rpi-linux-gnueabihf/bin/arm-rpi-linux-gnueabihf-gcc
+COMPILER=gcc
+CFLAGS=--sysroot="${HOME}/arm-rpi-linux-gnueabihf/arm-rpi-linux-gnueabihf/sysroot" -B"${HOME}/arm-rpi-linux-gnueabihf/bin/arm-rpi-linux-gnueabihf-" -I../include -D__arm__ -D_XOPEN_SOURCE=600 -D_BSD_SOURCE -D_DEFAULT_SOURCE -std=gnu99 -pedantic -Wall -W -Wundef -Wendif-labels -Wshadow -Wpointer-arith -Wcast-align -Wcast-qual -Wwrite-strings -Wstrict-prototypes -Wmissing-prototypes -Wnested-externs -Winline -Wdisabled-optimization -fstrict-aliasing -O2 -pipe -Wno-parentheses -fPIC
+PTHREAD_CFLAGS=-pthread
+LDFLAGS=-fPIC
+ALL_LIBS=libck.a

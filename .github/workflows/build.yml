@@ -35,75 +35,92 @@ jobs:
             libck-macos11.a
             LICENSE
 
-  build-macos-arm64:
-    runs-on: [self-hosted, macOS, ARM64]
+  # build-macos-arm64:
+  #   runs-on: [self-hosted, macOS, ARM64]
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v3
+  #       with:
+  #         persist-credentials: false
+
+  #     - name: Configure and make
+  #       run: |
+  #         ./configure
+  #         make
+
+  #     - name: Prepare output
+  #       run: |
+  #         pushd include
+  #         zip -r ../include.zip .
+  #         popd
+  #         mv src/libck.a ./libck-macos-arm64.a
+
+  #     - name: Upload build output
+  #       uses: actions/upload-artifact@v2
+  #       with:
+  #         name: build-output-macos-arm64
+  #         path: libck-macos-arm64.a
+
+  build-android-and-rpi:
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout
         uses: actions/checkout@v3
         with:
           persist-credentials: false
 
-      - name: Configure and make
+      # DEBUG: rpi-toolchain v0.0.4 has been incorrectly tarballed with an absolute path which will be fixed in a later version
+      - name: Get RPi toolchain
         run: |
-          ./configure
-          make
+          wget https://github.com/sfjohnson/rpi-toolchain/releases/download/v0.0.4/arm-rpi-linux-gnueabihf.tar.xz
+          tar xf arm-rpi-linux-gnueabihf.tar.xz
+          mv home/runner/x-tools/arm-rpi-linux-gnueabihf ~
 
-      - name: Prepare output
-        run: |
-          pushd include
-          zip -r ../include.zip .
-          popd
-          mv src/libck.a ./libck-macos-arm64.a
-
-      - name: Upload build output
-        uses: actions/upload-artifact@v2
-        with:
-          name: build-output-macos-arm64
-          path: libck-macos-arm64.a
-
-  build-android:
-    runs-on: ubuntu-20.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          persist-credentials: false
-
-      - name: Configure and make
+      - name: Configure and make Android
         run: |
           ln -sf $ANDROID_NDK_ROOT $ANDROID_SDK_ROOT/ndk-bundle
           ./configure --profile="android-aarch64"
           make
+          mv src/libck.a ./libck-android30.a
         env:
           CC: /usr/local/lib/android/sdk/ndk-bundle/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android30-clang
 
-      - name: Rename build output
-        run: mv src/libck.a ./libck-android30.a
+      - name: Configure and make RPi
+        run: |
+          make clean
+          ./configure --profile="arm"
+          make
+          mv src/libck.a ./libck-rpi.a
+        env:
+          CC: ${{ env.HOME }}/arm-rpi-linux-gnueabihf/bin/arm-rpi-linux-gnueabihf-gcc
 
       - name: Upload build output
         uses: actions/upload-artifact@v2
         with:
-          name: build-output-android30
-          path: libck-android30.a
+          name: build-output-android30-and-rpi
+          path: |
+            libck-android30.a
+            libck-rpi.a
 
   create-release:
-    runs-on: ubuntu-20.04
-    needs: [build-macos, build-android, build-macos-arm64]
+    runs-on: ubuntu-22.04
+    # needs: [build-macos, build-android-and-rpi, build-macos-arm64]
+    needs: [build-macos, build-android-and-rpi]
     steps:
       - name: Get build output macos11
         uses: actions/download-artifact@v2
         with:
           name: build-output-macos11
 
-      - name: Get build output android30
+      - name: Get build output android30 and rpi
         uses: actions/download-artifact@v2
         with:
-          name: build-output-android30
+          name: build-output-android30-and-rpi
 
-      - name: Get build output macos-arm64
-        uses: actions/download-artifact@v2
-        with:
-          name: build-output-macos-arm64
+      # - name: Get build output macos-arm64
+      #   uses: actions/download-artifact@v2
+      #   with:
+      #     name: build-output-macos-arm64
 
       - name: Create release
         uses: softprops/action-gh-release@v1
@@ -112,7 +129,14 @@ jobs:
             include.zip
             libck-macos11.a
             libck-android30.a
-            libck-macos-arm64.a
+            libck-rpi.a
             LICENSE
+          # files: |
+          #   include.zip
+          #   libck-macos11.a
+          #   libck-android30.a
+          #   libck-rpi.a
+          #   libck-macos-arm64.a
+          #   LICENSE
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
