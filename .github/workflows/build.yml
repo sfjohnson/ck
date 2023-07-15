@@ -70,10 +70,12 @@ jobs:
           persist-credentials: false
 
       # DEBUG: rpi-toolchain v0.0.4 has been incorrectly tarballed with an absolute path which will be fixed in a later version
+      # DEBUG: rpi-toolchain v0.0.5 has wack directory permissions which will be fixed in a later version
       - name: Get RPi toolchain
         run: |
           wget https://github.com/sfjohnson/rpi-toolchain/releases/download/v0.0.4/arm-rpi-linux-gnueabihf.tar.xz
           tar xf arm-rpi-linux-gnueabihf.tar.xz
+          sudo chmod -R u+rwX,go+rX,go-w home/
           mv home/runner/x-tools/arm-rpi-linux-gnueabihf ~
 
       - name: Configure and make Android
