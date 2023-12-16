@@ -61,7 +61,7 @@ jobs:
           name: build-output-macos-arm64
           path: libck-macos-arm64.a
 
-  build-android-and-rpi:
+  build-linux:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
@@ -92,27 +92,35 @@ jobs:
         env:
           CC: ${{ env.HOME }}/arm-rpi-linux-gnueabihf/bin/arm-rpi-linux-gnueabihf-gcc
 
+      - name: Configure and make linux-x64
+        run: |
+          make clean
+          ./configure --profile="x86_64"
+          make
+          mv src/libck.a ./libck-linux-x64.a
+
       - name: Upload build output
         uses: actions/upload-artifact@v2
         with:
-          name: build-output-android30-and-rpi
+          name: build-output-linux
           path: |
             libck-android30.a
             libck-rpi.a
+            libck-linux-x64.a
 
   create-release:
     runs-on: ubuntu-22.04
-    needs: [build-macos, build-android-and-rpi, build-macos-arm64]
+    needs: [build-macos, build-linux, build-macos-arm64]
     steps:
       - name: Get build output macos11
         uses: actions/download-artifact@v2
         with:
           name: build-output-macos11
 
-      - name: Get build output android30 and rpi
+      - name: Get build output linux
         uses: actions/download-artifact@v2
         with:
-          name: build-output-android30-and-rpi
+          name: build-output-linux
 
       - name: Get build output macos-arm64
         uses: actions/download-artifact@v2
@@ -128,6 +136,7 @@ jobs:
             libck-android30.a
             libck-rpi.a
             libck-macos-arm64.a
+            libck-linux-x64.a
             LICENSE
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
