@@ -98,6 +98,8 @@ jobs:
           ./configure --profile="x86_64"
           make
           mv src/libck.a ./libck-linux-x64.a
+        env:
+          CC: gcc
 
       - name: Upload build output
         uses: actions/upload-artifact@v2
