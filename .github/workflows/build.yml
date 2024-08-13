@@ -76,7 +76,7 @@ jobs:
 
       - name: Configure and make RPi
         run: |
-          ./configure --profile="aarch64"
+          ./configure --profile="rpi-aarch64"
           make
           mv src/libck.a ./libck-rpi-arm64.a
         env:
