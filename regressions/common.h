@@ -34,11 +34,16 @@
 #include <stdlib.h>
 #include <sys/time.h>
 
-#ifdef __linux__
+#if defined(__linux__) || defined(__DragonFly__)
 #include <sched.h>
 #include <sys/types.h>
 #include <sys/syscall.h>
+#if defined(__DragonFly__)
+#include <sys/sched.h>
+#include <pthread_np.h>
+#endif
 #elif defined(__MACH__)
+#include <errno.h>
 #include <mach/mach.h>
 #include <mach/thread_policy.h>
 #elif defined(__FreeBSD__)
@@ -269,11 +274,15 @@ struct affinity {
 
 #define AFFINITY_INITIALIZER {0, 0}
 
-#ifdef __linux__
+#if defined(__linux__) || defined(__DragonFly__)
 static pid_t
 common_gettid(void)
 {
+#if defined(__linux__)
 	return syscall(__NR_gettid);
+#else
+	return pthread_getthreadid_np();
+#endif
 }
 
 CK_CC_UNUSED static int
@@ -312,13 +321,19 @@ aff_iterate(struct affinity *acb)
 {
 	thread_affinity_policy_data_t policy;
 	unsigned int c;
+	int err;
 
 	c = ck_pr_faa_uint(&acb->request, acb->delta) % CORES;
 	policy.affinity_tag = c;
-	return thread_policy_set(mach_thread_self(),
+	err = thread_policy_set(mach_thread_self(),
 				 THREAD_AFFINITY_POLICY,
 				 (thread_policy_t)&policy,
 				 THREAD_AFFINITY_POLICY_COUNT);
+	if (err == KERN_NOT_SUPPORTED)
+		return 0;
+	if (err != 0)
+		errno = EINVAL;
+	return err;
 }
 
 CK_CC_UNUSED static int
@@ -486,6 +501,11 @@ rdtsc(void)
 	uint64_t r;
 
 	__asm __volatile__ ("mrs %0, cntvct_el0" : "=r" (r) : : "memory");
+	return r;
+#elif defined(__riscv) && __riscv_xlen == 64
+	uint64_t r;
+
+	__asm __volatile__("rdtime %0" : "=r" (r) :: "memory");
 	return r;
 #else
 	return 0;
